@@ -37,7 +37,7 @@
     </div>
 
     <!-- Existing course list -->
-    <div v-if="!isAddCoursePopupVisible">
+    <div v-if="!isAddCoursePopupVisible && !isUpdateCoursePopupVisible">
       <div class="card" v-for="course in courses" :key="course._id">
         <ul class="list-group">
           <li class="list-group-item">ID: {{ course._id }}</li>
@@ -152,8 +152,8 @@ async handleUpdateCoursePopup(course) {
       this.updatedCourse = { ...course };
       this.isUpdateCoursePopupVisible = true;
     },
-    async handleUpdatingCourse() { // Rename the method
-      const response = await this.updateCourse(this.updatedCourse); // Call the Vuex action for update
+    async handleUpdatingCourse() {
+      const response = await this.updateCourse(this.updatedCourse);
       console.log('Response:', response);
       if (response.status === 200) {
         this.getCourses();

@@ -6,6 +6,7 @@ const state = {
     user: {},
     status: '',
     courses: [],
+    profiles:[],
     error: null
 };
 
@@ -22,6 +23,7 @@ const getters = {
     user: state => state.user,
     error: state => state.error,
     courses: state => state.courses,
+    profiles: state => state.profiles,
 };
 
 const actions = {
@@ -83,6 +85,23 @@ const actions = {
         let res = await axios.get('http://localhost:3000/api/users/profile')
         commit('user_profile', res.data.user)
         return res;
+    },
+    //Get all Profiles
+    async getAllProfiles({ commit }) {
+        commit('getProfiles_request');
+        try {
+            
+            let res = await axios.get('http://localhost:3000/api/users/getAllProfiles');
+
+           
+            if (res.data.profiles) {
+                commit('profiles_information', res.data.profiles);
+            }
+
+            return res;
+        } catch (err) {
+            commit('getProfiles_error', err);
+        }
     },
     // Logout the user
     async logout({
@@ -160,7 +179,7 @@ const mutations = {
     },
     auth_error(state, err) {
         state.error = err.response.data.msg
-    },
+    },    
     register_request(state) {
         state.error = null
         state.status = 'loading'
@@ -194,6 +213,17 @@ const mutations = {
     },
     user_profile(state, user) {
         state.user = user
+    },
+    getProfiles_request(state) {
+        state.error = null;
+        state.status = 'loading';
+    },
+    profiles_information(state, profiles) {
+        state.profiles = profiles;
+        state.status = 'success';
+    },
+    getProfiles_error(state, err) {
+        state.error = err.response.data.msg;
     },
     createCourse_request(state){
         state.error = null
