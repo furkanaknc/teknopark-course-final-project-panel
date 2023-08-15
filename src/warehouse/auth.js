@@ -4,9 +4,11 @@ import router from "../router/index";
 const state = {
     token: localStorage.getItem('token') || '',
     user: {},
+    role:'',
     status: '',
     courses: [],
     profiles:[],
+    educators: [],
     error: null
 };
 
@@ -21,9 +23,11 @@ const getters = {
     isLoggedIn: state => !!state.token,
     authState: state => state.status,
     user: state => state.user,
+    role: state => state.role,
     error: state => state.error,
     courses: state => state.courses,
     profiles: state => state.profiles,
+    educators: state => state.profiles,
 };
 
 const actions = {
@@ -37,11 +41,13 @@ const actions = {
             if (res.data.success) {
                 const token = res.data.token;
                 const user = res.data.user;
+                const role =res.data.role;
+                console.log(role)
                 // Store the token into the localstorage
                 localStorage.setItem('token', token);
                 // Set the axios defaults
                 axios.defaults.headers.common['Authorization'] = token;
-                commit('auth_success', token, user);
+                commit('auth_success', token, user, role);
             }
             return res;
         } catch (err) {
@@ -103,6 +109,52 @@ const actions = {
             commit('getProfiles_error', err);
         }
     },
+
+    //Update Personal
+    async updateProfile({ commit }, { userId, updatedData }) {
+        try {
+            const res = await axios.put(`http://localhost:3000/api/users/updateUser/${userId}`, updatedData);
+            if (res.data.success) {
+                commit('updateProfile_success', updatedData);
+            }
+            return res;
+        } catch (err) {
+            console.error("Update User Error:", err);
+            throw err;
+        }
+    },
+
+    //Delete user
+    async deleteUser({ commit }, userId) {
+        commit('deleteUser_request');
+        try {
+            let res = await axios.delete(`http://localhost:3000/api/users/deleteUser/${userId}`);
+            if (res.data.success !== undefined) {
+                commit('deleteUser_success', userId);
+            }
+            return res;
+        } catch (err) {
+            commit('deleteUser_error', err);
+        }
+    },
+    
+
+    //Call Educators
+    async getEducatorProfiles({ commit }) {
+        commit('getEducatorProfiles_request');
+        try {
+            let res = await axios.get('http://localhost:3000/api/users/getEducators');
+    
+            if (res.data.educators) {
+                commit('educatorProfiles_information', res.data.educators);
+            }
+    
+            return res;
+        } catch (err) {
+            commit('getEducatorProfiles_error', err);
+        }
+    },
+
     // Logout the user
     async logout({
         commit
@@ -171,15 +223,17 @@ const mutations = {
         state.error = null
         state.status = 'loading'
     },
-    auth_success(state, token, user) {
-        state.token = token
-        state.user = user
-        state.status = 'success'
-        state.error = null
+    auth_success(state, token, user, role) {
+        state.token = token;
+        state.user = user;
+        state.role = role;
+        state.status = 'success';
+        state.error = null;
     },
+    
     auth_error(state, err) {
         state.error = err.response.data.msg
-    },    
+    },
     register_request(state) {
         state.error = null
         state.status = 'loading'
@@ -207,6 +261,7 @@ const mutations = {
         state.status = ''
         state.token = ''
         state.user = ''
+        state.role = ''
     },
     profile_request(state) {
         state.status = 'loading'
@@ -225,6 +280,47 @@ const mutations = {
     getProfiles_error(state, err) {
         state.error = err.response.data.msg;
     },
+
+    updateProfile_request(state) {
+        state.error = null;
+        state.status = 'loading';
+    },
+    updateProfile_success(state, updatedProfile) {
+        const profileIndex = state.profiles.findIndex(profile => profile._id === updatedProfile._id);
+        if (profileIndex !== -1) {
+            state.profiles[profileIndex] = updatedProfile;
+        }
+    },
+    
+    updateProfile_error(state, err) {
+        state.error = err.response.data.msg;
+    },
+
+    deleteUser_request(state) {
+        state.error = null;
+        state.status = 'loading';
+    },
+    deleteUser_success(state, userId) {
+        state.profiles = state.profiles.filter(profile => profile._id !== userId);
+        state.status = 'success';
+    },
+    deleteUser_error(state, err) {
+        state.error = err.response.data.msg;
+    },
+    
+    getEducatorProfiles_request(state) {
+        state.error = null;
+        state.status = 'loading';
+    },
+    educatorProfiles_information(state, profiles) {
+        state.profiles = profiles;
+        state.status = 'success';
+    },
+    getEducatorProfiles_error(state, err) {
+        state.error = err.response.data.msg;
+    },
+
+
     createCourse_request(state){
         state.error = null
         state.status = 'loading' 

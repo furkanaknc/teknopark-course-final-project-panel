@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>PROFILE</h2>
+    <h2>MY PROFILE</h2>
     <div class="card" v-if="user">
       <ul class="list-group">
         <li class="list-group-item">Email: {{user.email}}</li>

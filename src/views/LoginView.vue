@@ -39,7 +39,7 @@
         this.login(user)
         .then(res=>{
           if(res.data.success){
-            this.$router.push("/");
+            this.$router.push("/profile");
           }
         })
         .catch(err=>{

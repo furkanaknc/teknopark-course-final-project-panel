@@ -1,8 +1,8 @@
 <template>
   <div>
     <h2>Courses</h2>
-    <div class="buttons">
-      <button class="btn btn-primary btn-space" @click="isAddCoursePopupVisible = true">
+    <div  class="buttons">
+      <button v-if="isAdmin() && !isUpdateCoursePopupVisible && !isAddCoursePopupVisible" class="btn btn-success btn-space" @click="isAddCoursePopupVisible = true">
         Add Course
       </button>
     </div>
@@ -17,6 +17,16 @@
         <div class="form-group">
           <label for="company">Company:</label>
           <input v-model="newCourse.company" type="text" id="company" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="educator">Educator</label>
+          <select v-model="newCourse.educator" id="educator" class="form-control">
+            <option value="">Select Educator</option>
+            <option type="Text" v-for="educator in educators" :key="educator._id" :value="educator._id">
+                {{ educator.firstName }} {{ educator.lastName }}
+            </option>
+        </select>
+        
         </div>
         <div class="form-group">
           <label for="group">Group:</label>
@@ -43,11 +53,12 @@
           <li class="list-group-item">ID: {{ course._id }}</li>
           <li class="list-group-item">Name: {{ course.name }}</li>
           <li class="list-group-item">Company: {{ course.company }}</li>
+          <li class="list-group-item">Educator: {{ getEducatorName(course.educator) }}</li>
           <li class="list-group-item">Group: {{ course.group }}</li>
           <li class="list-group-item">Description: {{ course.description }}</li>
         </ul>
-        <button class="btn btn-primary" @click="handleDeleteCourse(course._id)">Delete</button>
-        <button class="btn btn-primary" @click="handleUpdateCoursePopup(course)">Edit</button>
+        <button v-if="isAdmin()" class="btn btn-danger" @click="handleDeleteCourse(course._id)">Delete</button>
+        <button v-if="isAdmin()" class="btn btn-primary" @click="handleUpdateCoursePopup(course)">Edit</button>
 
       </div>
     </div>
@@ -88,7 +99,13 @@ import { mapActions, mapGetters } from 'vuex';
 
 export default {
   computed: {
-    ...mapGetters(['courses']),
+    ...mapGetters(['courses','user','educators']),
+    getEducatorName() {
+        return educatorId => {
+            const educator = this.educators.find(edu => edu._id === educatorId);
+            return educator ? `${educator.firstName} ${educator.lastName}` : 'Unknown Educator';
+        };
+    },
   },
   data() {
     return {
@@ -98,6 +115,7 @@ export default {
         company: '',
         group: '',
         description: '',
+        educator:'',
       },
       addCourseError: '',
       isUpdateCoursePopupVisible: false,
@@ -107,11 +125,15 @@ export default {
         company: '',
         group: '',
         description: '',
+        educator:'',
       },
+      
     };
   },
   methods: {
-    ...mapActions(['getCourses', 'createCourse','deleteCourse','updateCourse']),
+    ...mapActions(['getCourses', 'createCourse','deleteCourse','updateCourse','getEducatorProfiles']),
+
+  // delete operation
     async handleDeleteCourse(courseId) {
   const response = await this.deleteCourse(courseId);
   console.log('Response:', response); 
@@ -122,6 +144,12 @@ export default {
     console.error('Failed to delete course:', response.data.msg);
   }
 },
+
+
+// check user is admin or not
+isAdmin() {
+  return this.user.role === 'Admin';
+  },
 
     closeForm() {
       this.isAddCoursePopupVisible = false;
@@ -135,6 +163,8 @@ export default {
         description: '',
       };
     },
+
+  // add course operation
     async addCourse() {
   const response = await this.createCourse(this.newCourse);
   console.log('Response:', response); 
@@ -148,6 +178,19 @@ export default {
     console.error('Failed to create course:', this.addCourseError);
   }
 },
+
+async getEducatorProfiles() {
+    try {
+        const response = await this.$store.dispatch('getEducatorProfiles');
+        console.log('Educators Response:', response);
+    } catch (error) {
+        console.error('Error fetching educators:', error);
+    }
+},
+
+
+
+// update operation
 async handleUpdateCoursePopup(course) {
       this.updatedCourse = { ...course };
       this.isUpdateCoursePopupVisible = true;
@@ -162,15 +205,21 @@ async handleUpdateCoursePopup(course) {
         console.error('Failed to update course:', response.data.msg);
       }
     },
+
+  // close the form
     cancelUpdate() {
       this.isUpdateCoursePopupVisible = false;
     },
-
-
-    
   },
+ 
   created() {
     this.getCourses();
+    this.$store.dispatch('getProfile');
+    this.$store.dispatch('getEducatorProfiles'); 
+    
   },
 };
 </script>
+
+<style>
+</style>

@@ -126,7 +126,7 @@ export default{
       try {
         const response = await this.createUser(user);
         if (response.data.success) {
-        this.$router.push("home");
+        this.$router.push("/");
       }
       } catch (error) {
         console.error("Error:", error);
