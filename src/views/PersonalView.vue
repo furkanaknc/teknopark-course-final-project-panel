@@ -1,6 +1,7 @@
 <template>
     <div>
       <h2>Profiles</h2>
+      <router-link to="/createUser" class="btn btn-success">Add User</router-link>
       <div v-if="!ProfileUpdateFormVisible">
       <div class="card" v-for="profile in profiles" :key="profile._id">
         <ul class="list-group">

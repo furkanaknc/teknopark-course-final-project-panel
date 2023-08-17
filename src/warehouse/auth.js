@@ -38,11 +38,12 @@ const actions = {
         commit('auth_request');
         try {
             let res = await axios.post('http://localhost:3000/api/users/login', user)
+            
             if (res.data.success) {
                 const token = res.data.token;
                 const user = res.data.user;
                 const role =res.data.role;
-                console.log(role)
+                // console.log(role)
                 // Store the token into the localstorage
                 localStorage.setItem('token', token);
                 // Set the axios defaults

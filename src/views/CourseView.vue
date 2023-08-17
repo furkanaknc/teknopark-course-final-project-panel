@@ -2,7 +2,7 @@
   <div>
     <h2>Courses</h2>
     <div  class="buttons">
-      <button v-if="isAdmin() && !isUpdateCoursePopupVisible && !isAddCoursePopupVisible" class="btn btn-success btn-space" @click="isAddCoursePopupVisible = true">
+      <button v-if="isValidUser() && !isUpdateCoursePopupVisible && !isAddCoursePopupVisible" class="btn btn-success btn-space" @click="isAddCoursePopupVisible = true">
         Add Course
       </button>
     </div>
@@ -57,8 +57,8 @@
           <li class="list-group-item">Group: {{ course.group }}</li>
           <li class="list-group-item">Description: {{ course.description }}</li>
         </ul>
-        <button v-if="isAdmin()" class="btn btn-danger" @click="handleDeleteCourse(course._id)">Delete</button>
-        <button v-if="isAdmin()" class="btn btn-primary" @click="handleUpdateCoursePopup(course)">Edit</button>
+        <button v-if="isValidUser()" class="btn btn-danger" @click="handleDeleteCourse(course._id)">Delete</button>
+        <button v-if="isValidUser()" class="btn btn-primary" @click="handleUpdateCoursePopup(course)">Edit</button>
 
       </div>
     </div>
@@ -72,6 +72,15 @@
     <div class="form-group">
       <label for="company">Company:</label>
       <input v-model="updatedCourse.company" type="text" id="company" class="form-control">
+    </div>
+    <div class="form-group">
+    <label for="educator">Educator:</label>
+    <select v-model="updatedCourse.educator" id="educator" class="form-control">
+      <option value="">Select Educator</option>
+      <option v-for="educator in educators" :key="educator._id" :value="educator._id">
+        {{ educator.firstName }} {{ educator.lastName }}
+      </option>
+    </select>
     </div>
     <div class="form-group">
       <label for="group">Group:</label>
@@ -147,9 +156,9 @@ export default {
 
 
 // check user is admin or not
-isAdmin() {
-  return this.user.role === 'Admin';
-  },
+isValidUser() {
+      return this.user.role === 'Admin' || this.user.role ==='Company Owner';
+    },
 
     closeForm() {
       this.isAddCoursePopupVisible = false;
@@ -161,6 +170,7 @@ isAdmin() {
         company: '',
         group: '',
         description: '',
+        educator:''
       };
     },
 
@@ -193,6 +203,7 @@ async getEducatorProfiles() {
 // update operation
 async handleUpdateCoursePopup(course) {
       this.updatedCourse = { ...course };
+      this.updatedCourse.educator = course.educator;
       this.isUpdateCoursePopupVisible = true;
     },
     async handleUpdatingCourse() {

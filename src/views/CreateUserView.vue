@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <h1>ADD USER</h1>
-        <div>
+        <div v-if="isValidUser">
           <form @submit.prevent="submitUser">
             <div class="form-group">
               <label for="firstName">First Name</label>
@@ -77,6 +77,7 @@
               <input id="password" type="text" placeholder="password" name="password" v-model="password" class=" form-control">
             </div>
             <button class="btn btn-primary">Add User</button>
+            <router-link to="/personals" class="btn btn-secondary">Personal List</router-link>
            
           </form>
         </div>
@@ -84,8 +85,17 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+
+import { mapActions, mapGetters } from 'vuex';
+
 export default{
+  computed:{
+    ...mapGetters(['user','role']),
+    isValidUser(){
+      console.log('user role:',this.user.role);
+      return this.user.role === 'Admin' || this.user.role === 'Company Owner'
+    }
+  },
   data(){
     return{
       firstName:"",
@@ -103,6 +113,7 @@ export default{
       lawNo:"",
       password:"",
     };
+    
   },
   methods:{
     ...mapActions(['createUser']),
@@ -126,7 +137,7 @@ export default{
       try {
         const response = await this.createUser(user);
         if (response.data.success) {
-        this.$router.push("/");
+        this.$router.push("/personals");
       }
       } catch (error) {
         console.error("Error:", error);
@@ -138,6 +149,10 @@ export default{
 //   }
 // });
     }
+  },
+  created() {
+    this.$store.dispatch('getProfile');
   }
+  
 }
 </script>
