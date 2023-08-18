@@ -19,10 +19,10 @@
           <li class="list-group-item">Wage: {{ profile.wage }}</li>
           <li class="list-group-item">Law Number: {{ profile.lawNo }}</li>
           <ul class="list-group">
-            <li v-for="course in profile.courses" :key="course._id">
-              Course Name: {{ course.courseName }}
-            </li>
-          </ul>
+  <li v-for="courseId in profile.courses" :key="courseId">
+    Course Name: {{ getCourseName(courseId) }} (Company: {{ getCourseCompanyName(courseId) }})
+  </li>
+</ul>
           <button class="btn btn-primary" @click="openUpdateForm(profile)">Update</button>
           <button class="btn btn-danger" @click="deleteProfile(profile._id)">Delete</button>
         </ul>
@@ -100,6 +100,22 @@
                   <label for="lawNo">Law No</label>
                   <input id="lawNo" type="number" placeholder="Law No" name="lawNo" v-model="updateUserProfile.lawNo" class=" form-control">
               </div>
+              <div class="form-group">
+                <label for="courses">Courses</label>
+                <select id="courses" multiple v-model="updateUserProfile.courses" class="form-control">
+                  
+                  <option v-for="course in courses" :key="course._id" :value="course._id">
+                    {{ course.name }} ({{ course.company }})
+                  </option>
+                </select>
+                
+              </div>
+              <ul class="list-group">
+                <li v-for="courseId in updateUserProfile.courses" :key="courseId">
+                  Course Name: {{ getCourseName(courseId) }} (Company: {{ getCourseCompanyName(courseId) }})
+                  <button class="btn btn-danger" @click="removeCourse(courseId)">Remove</button>
+                </li>
+              </ul>
             <button class="btn btn-primary" type="submit">Save</button>
             <button class="btn btn-secondary" type="submit" @click="closeForm">Close</button>
           </form>
@@ -112,7 +128,7 @@
   
   export default {
     computed: {
-      ...mapGetters(['profiles']),
+      ...mapGetters(['courses','profiles']),
     },
     data(){
       return{
@@ -132,21 +148,34 @@
         payroll: '',
         wage: '',
         lawNo: '',
+        courses:[]
       },
       }
     },
     created() {
       this.fetchProfiles();
+      this.$store.dispatch('getProfile');
+      this.$store.dispatch('getCourses')
     },
     methods: {
-      ...mapActions(['getAllProfiles','updateProfile','deleteUser']),
+      ...mapActions(['getAllProfiles','updateProfile','deleteUser','getCourses','addUserCourse','removeUserCourse']),
       fetchProfiles() {
         this.getAllProfiles();
+      },
+
+      getCourseName(courseId) {
+        const course = this.courses.find(course => course._id === courseId);
+        return course ? course.name : 'Course Not Found';
+      },
+      getCourseCompanyName(courseId) {
+        const course = this.courses.find(course => course._id === courseId);
+        return course  ? course.company : 'Unknown Company';
       },
       
       openUpdateForm(profile) {
       this.ProfileUpdateFormVisible = true;
       this.updateUserProfile = { ...profile };
+      this.updateUserProfile.courses = profile.courses;
     },
     closeForm() {
       this.ProfileUpdateFormVisible = false;
@@ -186,6 +215,44 @@ async deleteProfile(profileId) {
         console.error("Delete error:", err);
       }
     },
+
+    async addCourseToUser(courseId) {
+    try {
+      const res = await this.addUserCourse({
+        userId: this.updateUserProfile._id,
+        courseId: courseId,
+      });
+      if (res.data.success) {
+        console.log("Course added to user successfully.");
+        // You might want to update the list of courses after adding
+        // and update the profile data as well
+      }
+    } catch (err) {
+      console.error("Add course error:", err);
+    }
+  },
+
+  async removeCourse(courseId) {
+    try {
+      const userId = this.updateUserProfile._id;
+
+      const res = await this.removeUserCourse({
+        userId,
+        courseId
+      });
+
+      if (res.data.success) {
+        console.log("Course removed successfully.");
+        // Update the local state (VueX) after the course removal
+        this.$store.commit("deleteCourseFromUser_success", {
+          userId,
+          courseId
+        });
+      }
+    } catch (err) {
+      console.error("Course removal error:", err);
+    }
+  },
 
 
     },

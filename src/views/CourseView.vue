@@ -5,6 +5,8 @@
       <button v-if="isValidUser() && !isUpdateCoursePopupVisible && !isAddCoursePopupVisible" class="btn btn-success btn-space" @click="isAddCoursePopupVisible = true">
         Add Course
       </button>
+
+      <button class="btn btn-success"  @click="isAddUserToCoursePopupVisible = true">Add user to course</button>
     </div>
 
     <!-- Hidden form -->
@@ -47,7 +49,7 @@
     </div>
 
     <!-- Existing course list -->
-    <div v-if="!isAddCoursePopupVisible && !isUpdateCoursePopupVisible">
+    <div v-if="!isAddCoursePopupVisible && !isUpdateCoursePopupVisible && !isAddUserToCoursePopupVisible">
       <div class="card" v-for="course in courses" :key="course._id">
         <ul class="list-group">
           <li class="list-group-item">ID: {{ course._id }}</li>
@@ -100,6 +102,27 @@
   </form>
 </div>
 
+<!-- Add User To Course Form -->
+<div v-if="isAddUserToCoursePopupVisible" class="card">
+  <form @submit.prevent="addUserToCourse">
+    <label for="course">Courses</label>
+    <select v-model="AddedUser.selectedCourse" class="form-select">
+      <option v-for="course in courses" :key="course._id" :value="course._id">
+       Course Name: {{ course.name }} || Company: {{ course.company }}
+      </option>
+    </select>
+    <label for="personal">Personals</label>
+    <select v-model="AddedUser.selectedUser" class="form-select">
+      <option v-for="profile in profiles" :key="profile._id" :value="profile._id">
+       Personal: {{ profile.firstName }} {{ profile.lastName }}
+      </option>
+    </select>
+    <button type="submit" class="btn btn-primary">Add User to Course</button>
+    <button type="button" class="btn btn-secondary" @click="closeAddUserToCourseForm">Close</button>
+  </form>
+</div>
+
+
   </div>
 </template>
 
@@ -108,7 +131,7 @@ import { mapActions, mapGetters } from 'vuex';
 
 export default {
   computed: {
-    ...mapGetters(['courses','user','educators']),
+    ...mapGetters(['courses','user','educators','profiles']),
     getEducatorName() {
         return educatorId => {
             const educator = this.educators.find(edu => edu._id === educatorId);
@@ -136,11 +159,16 @@ export default {
         description: '',
         educator:'',
       },
+      isAddUserToCoursePopupVisible: false,
+      AddedUser:{
+        selectedCourse:'',
+        selectedUser:''
+      }
       
     };
   },
   methods: {
-    ...mapActions(['getCourses', 'createCourse','deleteCourse','updateCourse','getEducatorProfiles']),
+    ...mapActions(['getCourses', 'createCourse','deleteCourse','updateCourse','getEducatorProfiles','getAllProfiles','addUserCourse']),
 
   // delete operation
     async handleDeleteCourse(courseId) {
@@ -158,6 +186,9 @@ export default {
 // check user is admin or not
 isValidUser() {
       return this.user.role === 'Admin' || this.user.role ==='Company Owner';
+    },
+    closeAddUserToCourseForm(){
+      this.isAddUserToCoursePopupVisible =false;
     },
 
     closeForm() {
@@ -221,12 +252,31 @@ async handleUpdateCoursePopup(course) {
     cancelUpdate() {
       this.isUpdateCoursePopupVisible = false;
     },
+
+    async addUserToCourse() {
+    const userId = this.AddedUser.selectedUser;
+    const courseId = this.AddedUser.selectedCourse;
+
+    if (!userId || !courseId) {
+      // Handle validation/error if user/course is not selected
+      return;
+    }
+
+    try {
+      const response = await this.addUserCourse({ userId, courseId });
+      // You can handle success or error cases here
+      console.log('Add User to Course Response:', response);
+    } catch (error) {
+      console.error('Error adding user to course:', error);
+    }
+  },
   },
  
   created() {
     this.getCourses();
     this.$store.dispatch('getProfile');
     this.$store.dispatch('getEducatorProfiles'); 
+    this.$store.dispatch('getAllProfiles')
     
   },
 };
