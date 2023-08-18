@@ -3,7 +3,9 @@ import router from "../router/index";
 
 const state = {
     token: localStorage.getItem('token') || '',
-    user: {},
+    user: {
+        courses: []
+    },
     role:'',
     status: '',
     courses: [],
@@ -216,7 +218,35 @@ const actions = {
         } catch (err) {
             commit('deleteCourse_error', err);
         }
-    }
+    },
+    async addUserCourse({ commit }, { userId, courseId }) {
+        commit('addCourseToUser_request');
+        try {
+            const res = await axios.put(`http://localhost:3000/api/users/${userId}/addCourse`, { courseId });
+            if (res.data.success) {
+                commit('addCourseToUser_success', { userId, courseId });
+                return res;
+            }
+        } catch (err) {
+            commit('addCourseToUser_error', err);
+            throw err;
+        }
+    },
+
+    async removeUserCourse({ commit }, { userId, courseId }) {
+        commit('removeCourseFromUser_request');
+        try {
+            const res = await axios.put(`http://localhost:3000/api/users/${userId}/removeCourse`, { courseId });
+            if (res.data.success) {
+                commit('removeCourseFromUser_success', { userId, courseId });
+                return res;
+            }
+        } catch (err) {
+            commit('removeCourseFromUser_error', err);
+            throw err;
+        }
+    },
+    
 };
 
 const mutations = {
@@ -359,7 +389,42 @@ const mutations = {
         state.courses = state.courses.filter(course => course._id !== courseId);
         state.status = 'success';
       },
+      addCourseToUser_request(state) {
+        state.error = null;
+        state.status = 'loading';
+        },
+     addCourseToUser_success(state, { userId, courseId }) {
+       
+        if (state.user._id === userId) {
+            state.user.courses.push(courseId);
+        }
+        state.status = 'success';
+        },
+     addCourseToUser_error(state, err) {
+        state.error = err.response && err.response.data ? err.response.data.msg : 'An error occurred';
+    },
+    removeCourseFromUser_request(state) {
+        state.error = null;
+        state.status = 'loading';
+    },
+    removeCourseFromUser_success(state, { userId, courseId }) {
+
+        if (state.user._id === userId) {
+            state.user.courses = state.user.courses.filter(course => course !== courseId);
+        }
+        state.status = 'success';
+    },
+    removeCourseFromUser_error(state, err) {
+        state.error = err.response && err.response.data ? err.response.data.msg : 'An error occurred';
+    },
     
+    deleteCourseFromUser_success(state, { userId, courseId }) {
+        
+        const user = state.profiles.find(profile => profile._id === userId);
+        if (user) {
+          user.courses = user.courses.filter(course => course !== courseId);
+        }
+    }
       
    
 };
