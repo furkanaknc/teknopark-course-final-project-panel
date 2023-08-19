@@ -417,6 +417,9 @@ const mutations = {
     removeCourseFromUser_error(state, err) {
         state.error = err.response && err.response.data ? err.response.data.msg : 'An error occurred';
     },
+    setEducators(state, educators) {
+        state.educators = educators;
+      },
     
     deleteCourseFromUser_success(state, { userId, courseId }) {
         
